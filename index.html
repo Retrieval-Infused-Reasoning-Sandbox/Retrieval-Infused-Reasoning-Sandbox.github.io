@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeR²: Retrieval-Infused Reasoning Sandbox</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --accent: #14b8a6;
+            --text: #0f172a;
+            --text-light: #475569;
+            --bg-dark: #0f172a;
+            --bg-light: #f8fafc;
+            --border: #e2e8f0;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .chart-container {
+            width: 100%;
+            margin: 1rem 0; /* 减小间距 */
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            line-height: 1.7;
+            color: var(--text);
+            background: #fff;
+        }
+
+        /* --- Header & Hero --- */
+        .hero {
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            padding: 6rem 2rem 4rem;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 900;
+            margin-bottom: 1rem;
+            letter-spacing: -2px;
+            background: linear-gradient(to right, #fff, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            color: #cbd5e1;
+            max-width: 900px;
+            margin: 0 auto 2.5rem;
+            font-weight: 400;
+        }
+
+        .hero-badges { display: flex; flex-wrap: wrap; gap: 0.8rem; justify-content: center; margin-bottom: 3rem; }
+        .badge {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1.2rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            backdrop-filter: blur(10px);
+        }
+
+        /* --- Main Content --- */
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+        .main-figure {
+            margin: -4rem auto 4rem;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        .main-figure img { width: 100%; height: auto; border-radius: 12px; }
+        .figure-caption { margin-top: 1.5rem; font-size: 0.95rem; color: var(--text-light); line-height: 1.5; }
+
+        .section-header { text-align: center; margin-top: 6rem; margin-bottom: 3rem; }
+        .section-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 1rem; }
+        
+        /* Abstract */
+        .abstract-container {
+            background: var(--bg-light);
+            padding: 3rem;
+            border-radius: 24px;
+            border-left: 6px solid var(--primary);
+            margin-bottom: 5rem;
+        }
+        .abstract-text { font-size: 1.15rem; text-align: justify; }
+
+        /* Regimes Grid */
+        .regimes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+        .regime-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+        .regime-card:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .regime-card h3 { color: var(--primary); margin-bottom: 1rem; }
+
+        /* Pipeline Steps */
+        .pipeline-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .step-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+        .step-number {
+            width: 30px; height: 30px; background: var(--primary); color: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1rem; font-weight: 800;
+        }
+        /* 按钮容器：使用 flex 居中对齐，并设置间隙 */
+        .hero-actions {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.25rem; /* 统一按钮之间的间距 */
+            margin-top: 2.5rem;
+        }
+
+        /* 基础按钮样式：确保高度和内边距一致 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem; /* 图标与文字的间距 */
+            padding: 0.8rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-size: 1rem;
+            min-width: 140px; /* 最小宽度确保按钮看起来对称 */
+        }
+
+        /* 主按钮 (Paper) */
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        /* 描边按钮 (GitHub) */
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 1.5px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+            transform: translateY(-2px);
+        }
+        /* Table Style */
+        .table-container { overflow-x: auto; margin: 2rem 0; }
+        table { width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        th, td { padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); }
+        th { background: #f1f5f9; font-weight: 700; }
+        tr:hover { background: #f8fafc; }
+        .best-score { font-weight: 800; color: var(--primary); text-decoration: underline; }
+
+        /* Analysis Box */
+        .analysis-box { background: #1e293b; color: white; padding: 3rem; border-radius: 24px; margin: 5rem 0; }
+        .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+
+        /* Footer */
+        footer { background: var(--bg-light); padding: 4rem 0; text-align: center; border-top: 1px solid var(--border); }
+        .bibtex-box { background: #f1f5f9; padding: 1.5rem; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; text-align: left; margin-top: 2rem; }
+
+        @media (max-width: 768px) {
+            .analysis-grid { grid-template-columns: 1fr; }
+            .pipeline-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="hero">
+        <h1 class="hero-title">DeR² Sandbox</h1>
+        <p class="hero-subtitle">Decoupling Retrieval and Reasoning Capabilities</p>
+        <div class="hero-badges">
+            <span class="badge"><i class="fas fa-microscope"></i> Frontier Scientific Reasoning</span>
+            <span class="badge"><i class="fas fa-layer-group"></i> Capability Decoupling</span>
+            <span class="badge"><i class="fas fa-user-graduate"></i> 81 PhD Annotators</span>
+            <span class="badge"><i class="fas fa-check-double"></i> 2-Phase Validation</span>
+        </div>
+        <div class="hero-actions">
+            <a href="https://arxiv.org/" class="btn btn-primary">
+                <i class="fas fa-file-pdf"></i> Paper
+            </a>
+            <a href="https://github.com/Retrieval-Infused-Reasoning-Sandbox/RetrievalInfusedReasoningSandbox" class="btn btn-outline">
+                <i class="fab fa-github"></i> GitHub
+            </a>
+            <a href="https://huggingface.co/" class="btn btn-outline">
+                <i class="fab fa-github"></i> Dataset
+            </a>
+        </div>
+        <br>
+    </header>
+
+    <main class="container">
+        <div class="main-figure">
+            <img src="building.png" alt="DeR2 Framework" onerror="this.src='https://via.placeholder.com/1000x500?text=Building+Framework+Diagram'">
+            <p class="figure-caption">
+                <strong>Figure 1:</strong> The DeR² building framework. It isolates document-grounded reasoning by decoupling evidence access from logic execution across four controlled regimes, enabling fine-grained error attribution.
+            </p>
+        </div>
+
+        <section id="abstract">
+            <div class="section-header">
+                <h2 class="section-title">Abstract</h2>
+            </div>
+            <div class="abstract-container">
+                <div class="abstract-text">
+                    <p>
+                        Despite strong performance on existing benchmarks, it remains unclear whether large language models can reason over genuinely novel scientific information. Most evaluations score end-to-end RAG pipelines, where reasoning is confounded with retrieval and toolchain choices, and the signal is further contaminated by parametric memorization and open-web volatility. 
+                    </p>
+                    <p>
+                        We introduce <b>DeR²</b>, a controlled deep-research sandbox that isolates document-grounded reasoning while preserving core difficulties of deep search: multi-step synthesis, denoising, and evidence-based conclusion making. <b>DeR²</b> decouples evidence access from reasoning via four regimes—<b>Instruction-only</b>, <b>Concepts</b> (gold concepts without documents), <b>Related-only</b> (only relevant documents), and <b>Full-set</b> (relevant documents plus topically related distractors)—yielding interpretable regime gaps that operationalize retrieval loss vs. reasoning loss and enable fine-grained error attribution. 
+                    </p>
+                    <p>
+                        To prevent parametric leakage, we apply a two-phase validation that requires parametric failure without evidence while ensuring oracle-concept solvability.  To ensure reproducibility, each instance provides a frozen document library (drawn from 2023–2025 theoretical papers) with expert-annotated concepts and validated rationales. 
+                    </p>
+                    <p>
+                        Experiments across a diverse set of state-of-the-art foundation models reveal substantial variation and significant headroom: some models exhibit <b>mode-switch fragility</b>, performing worse with the Full-set than with Instruction-only, while others show <b>structural concept misuse</b>, correctly naming concepts but failing to execute them as procedures. 
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section id="regimes">
+            <div class="section-header">
+                <h2 class="section-title">Evaluation Regimes</h2>
+                <p style="color: var(--text-light);">Isolating knowledge selection, extraction, and composition </p>
+            </div>
+            <div class="regimes-grid">
+                <div class="regime-card">
+                    <div class="step-number">1</div>
+                    <h3>Instruction-Only</h3>
+                    <p>Measures <b>Parametric Knowledge</b>. Models must fail here three times to ensure true novelty.</p>
+                </div>
+                <div class="regime-card">
+                    <div class="step-number">2</div>
+                    <h3>Concepts-Only</h3>
+                    <p>Provides <b>Oracle Concepts</b>. Upper bound for concept-level composition and scheduling reasoning.</p>
+                </div>
+                <div class="regime-card">
+                    <div class="step-number">3</div>
+                    <h3>Related-Only</h3>
+                    <p>Instruction + <b>Relevant Docs</b>. Tests extraction and reasoning under clear evidence.</p>
+                </div>
+                <div class="regime-card">
+                    <div class="step-number">4</div>
+                    <h3>Full-Set</h3>
+                    <p>Related + <b>Noise Docs</b>. Measures knowledge selection, de-noising, and robust reasoning.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="pipeline">
+            <div class="section-header">
+                <h2 class="section-title">Data Construction Pipeline</h2>
+                <p style="color: var(--text-light);">Expert-driven curation for deep research reliability</p>
+            </div>
+            <div class="pipeline-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <strong>Source Selection</strong>
+                    <p>Theoretical papers from 2023-2025 across Physics, Math, and IT.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <strong>Item Construction</strong>
+                    <p>PhD annotators extract (Instruction, Concepts, Answer, CoT).</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <strong>Difficulty Control</strong>
+                    <p>Offline AI tests ensure failure without concepts and success with them.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <strong>Doc Set Curation</strong>
+                    <p>At least one Related doc per concept + topically adjacent Noise docs.</p>
+                </div>
+            </div>
+            <p style="text-align: center; color: var(--text-light); font-size: 0.9rem;">
+                *Each annotated question was rewarded at 2500 RMB to attract top-tier researchers.
+            </p>
+        </section>
+
+        <section id="analysis">
+            <div class="section-header">
+                <h2 class="section-title">Dataset Distribution</h2>
+                <p style="color: var(--text-light);">Structural and contextual complexity of the DeR² benchmark [cite: 11, 49]</p>
+            </div>
+            
+            <div class="chart-container" id="distributionChart" style="height: 600px;"></div>
+
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 5rem;">
+                <div class="chart-container" id="lineChart" style="flex: 1; min-width: 450px; height: 500px;"></div>
+                <div class="chart-container" id="barChart" style="flex: 1; min-width: 450px; height: 500px;"></div>
+            </div>
+        </section>
+
+        <section id="leaderboard">
+            <div class="section-header">
+                <h2 class="section-title">Model Performance Leaderboard</h2>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Model</th>
+                            <th>Instruction-Only</th>
+                            <th>Full-Set</th>
+                            <th>Related-Only</th>
+                            <th>Concepts-Only</th>
+                            <th>RLoss</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><b>OpenAI-GPT-5.2-high</b></td>
+                            <td class="best-score">65.8</td>
+                            <td class="best-score">71.1</td>
+                            <td class="best-score">71.4</td>
+                            <td class="best-score">83.8</td>
+                            <td>12.7</td>
+                        </tr>
+                        <tr>
+                            <td>Gemini-3-Pro-Preview</td>
+                            <td>64.2</td>
+                            <td>53.7</td>
+                            <td>68.3</td>
+                            <td>80.9</td>
+                            <td>27.2</td>
+                        </tr>
+                        <tr>
+                            <td>OpenAI-GPT-5.1-high</td>
+                            <td>59.8</td>
+                            <td>57.0</td>
+                            <td>66.9</td>
+                            <td>81.4</td>
+                            <td>24.4</td>
+                        </tr>
+                        <tr>
+                            <td>DeepSeek-V3.2-Thinking</td>
+                            <td>57.6</td>
+                            <td>49.3</td>
+                            <td>61.3</td>
+                            <td>75.3</td>
+                            <td>26.0</td>
+                        </tr>
+                        <tr>
+                            <td>Claude-Opus-4.1-thinking</td>
+                            <td>49.3</td>
+                            <td>40.0</td>
+                            <td>52.0</td>
+                            <td>72.4</td>
+                            <td>32.4</td>
+                        </tr>
+                        <tr style="background: #f1f5f9;">
+                            <td><b>Average Score</b></td>
+                            <td><b>55.9</b></td>
+                            <td><b>51.2</b></td>
+                            <td><b>62.9</b></td>
+                            <td><b>75.4</b></td>
+                            <td><b>24.2</b></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-light);">
+                Note: <b>RLoss (Retrieval Loss)</b> = Score(Concepts) - Score(Full-Set).
+            </p>
+        </section>
+
+        <section class="analysis-box">
+            <div class="analysis-grid">
+                <div>
+                    <h2 style="font-size: 2rem; margin-bottom: 1.5rem;">Core Failure Modes</h2>
+                    <ul style="list-style: none;">
+                        <li style="margin-bottom: 1.5rem; display: flex; gap: 1rem;">
+                            <i class="fas fa-exclamation-triangle" style="color: #fbbf24; margin-top: 5px;"></i>
+                            <span><b>Reasoning Mode Switching:</b> Models abandon viable parametric paths but fail to anchor new evidence-driven chains, leading to Score(Instr) > Score(FullSet).</span>
+                        </li>
+                        <li style="margin-bottom: 1.5rem; display: flex; gap: 1rem;">
+                            <i class="fas fa-code-branch" style="color: #fbbf24; margin-top: 5px;"></i>
+                            <span><b>Structural Retrieval Errors:</b> Models recognize definitions but fail to execute constructive mechanisms (e.g., algorithmic steps).</span>
+                        </li>
+                        <li style="margin-bottom: 1.5rem; display: flex; gap: 1rem;">
+                            <i class="fas fa-project-diagram" style="color: #fbbf24; margin-top: 5px;"></i>
+                            <span><b>Concept Coordination Breakdown:</b> Poor scheduling of extracted concepts even when they are present.</span>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h2 style="font-size: 2rem; margin-bottom: 1.5rem;">Regime Analysis</h2>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">
+                        The sandbox enables fine-grained diagnosis of three recurring gaps:
+                    </p>
+                    <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 12px; border: 1px dashed #475569;">
+                        <ul style="list-style: none; font-family: 'JetBrains Mono'; font-size: 0.9rem; color: #818cf8;">
+                            <li>1. Knowledge Loss: Concepts vs. Instruction</li>
+                            <li>2. Retrieval Loss: Related vs. Concepts</li>
+                            <li>3. Noise-Induced Loss: Full-set vs. Related</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section style="margin-bottom: 5rem; text-align: center;">
+            <h2 class="section-title">Citation</h2>
+            <div class="bibtex-box">
+<pre>@article{der2_sandbox2026,
+  title={Retrieval-Infused Reasoning Sandbox: A Benchmark for Decoupling Retrieval and Reasoning Capabilities},
+  author={ByteDance Seed and M-A-P Team},
+  year={2026},
+  url={https://github.com/Retrieval-Infused-Reasoning-Sandbox}
+}</pre>
+            </div>
+        </section>
+    </main>
+
+
+
+<script type="text/javascript">
+    // 使用 window.onload 确保 HTML 元素加载后再执行脚本
+    window.onload = function() {
+        // --- 统一样式变量 ---
+        const primaryFont = "'Inter', sans-serif";
+        const headerTextStyle = { fontFamily: primaryFont, fontWeight: 700, fontSize: 18 };
+
+        // 1. 初始化饼图 (Domain & Answer Type)
+        var distDom = document.getElementById('distributionChart');
+        var distChart = echarts.init(distDom);
+        var distOption = {
+            title: { text: 'Domain & Answer Type Distribution', left: 'center', textStyle: headerTextStyle },
+            tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)' },
+            legend: { orient: 'vertical', left: 'left', top: 'middle', padding: [0, 0, 0, 20] },
+            series: [
+                {
+                    name: 'Answer Type',
+                    type: 'pie',
+                    selectedMode: 'single',
+                    radius: [0, '35%'],
+                    label: { position: 'inner', fontSize: 12, color: '#fff' },
+                    data: [
+                        { value: 120, name: 'Formula', itemStyle: { color: '#6366f1' } },
+                        { value: 104, name: 'Conclusion', selected: true, itemStyle: { color: '#818cf8' } },
+                        { value: 57, name: 'Numeric', itemStyle: { color: '#a5b4fc' } },
+                        { value: 34, name: 'T/F', itemStyle: { color: '#c7d2fe' } },
+                        { value: 13, name: 'Other', itemStyle: { color: '#e0e7ff' } }
+                    ]
+                },
+                {
+                    name: 'Topic Domain',
+                    type: 'pie',
+                    radius: ['45%', '70%'],
+                    label: { fontSize: 14 },
+                    data: [
+                        { value: 60, name: 'TCS' }, { value: 55, name: 'Math' }, { value: 36, name: 'IT' },
+                        { value: 32, name: 'T. Chem' }, { value: 24, name: 'T. Astro' }, { value: 22, name: 'T. Phys' },
+                        { value: 18, name: 'T. Eng Mech' }, { value: 17, name: 'CT' }, { value: 16, name: 'Thermo & StatPhys' },
+                        { value: 13, name: 'Bio' }, { value: 10, name: 'EM/QED' }, { value: 7, name: 'GeoMech/Geodyn' },
+                        { value: 6, name: 'Env Mod' }, { value: 5, name: 'Comp Mat' }, { value: 4, name: 'Systems Sci' },
+                        { value: 3, name: 'Traffic Flow' }
+                    ]
+                }
+            ]
+        };
+        distChart.setOption(distOption);
+
+        // 2. 初始化折线图 (Reasoning Complexity)
+        var lineDom = document.getElementById('lineChart');
+        var lineChart = echarts.init(lineDom);
+        const step_counts = {1:1, 2:10, 3:35, 4:56, 5:66, 6:53, 7:47, 8:23, 9:16, 10:12, 11:3, 12:6};
+        const concetps_counts = {1:3, 2:43, 3:72, 4:76, 5:57, 6:32, 7:22, 8:12, 9:2, 10:6, 11:1, 12:1, 17:1};
+        
+        lineChart.setOption({
+            color: ['#5470C6', '#EE6666'],
+            title: { text: 'Reasoning Complexity', left: 'center', textStyle: headerTextStyle },
+            tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+            legend: { top: 35, data: ['Steps Count', 'Concepts Count'] },
+            grid: { top: 90, bottom: 40, left: 50, right: 50 },
+            xAxis: [
+                { type: 'category', axisLine: { lineStyle: { color: '#EE6666', width: 2 } }, data: Object.keys(concetps_counts) },
+                { type: 'category', axisLine: { lineStyle: { color: '#5470C6', width: 2 } }, data: Object.keys(step_counts) }
+            ],
+            yAxis: { type: 'value' },
+            series: [
+                { name: 'Steps Count', type: 'line', xAxisIndex: 1, smooth: true, data: Object.values(step_counts) },
+                { name: 'Concepts Count', type: 'line', smooth: true, data: Object.values(concetps_counts) }
+            ]
+        });
+
+        // 3. 初始化柱状图 (Document Distribution)
+        var barDom = document.getElementById('barChart');
+        var barChart = echarts.init(barDom);
+        const relatedcount = {1:24, 2:62, 3:90, 4:81, 5:31, 6:17, 7:10, 8:4, 9:4, 10:2, 11:1, 12:2, 13:2};
+        const noisecount = {1:81, 2:160, 3:48, 4:18, 5:21, 6:1, 8:1};
+        const doccount = {2:7, 3:36, 4:58, 5:72, 6:53, 7:38, 8:23, 9:13, 10:11, 11:6, 12:4, 13:1, 14:5, 15:1, 16:1, 17:1};
+        const xKeys = Array.from({ length: 17 }, (_, i) => String(i + 1));
+
+        barChart.setOption({
+            title: { text: 'Document Distribution', left: 'center', textStyle: headerTextStyle },
+            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+            legend: { top: 35, data: ['Related', 'Noise', 'Doc'] },
+            grid: { top: 90, bottom: 40 },
+            xAxis: { type: 'category', data: xKeys },
+            yAxis: { type: 'value' },
+            series: [
+                { name: 'Related', type: 'bar', data: xKeys.map(k => relatedcount[k] || 0) },
+                { name: 'Noise', type: 'bar', data: xKeys.map(k => noisecount[k] || 0) },
+                { name: 'Doc', type: 'bar', data: xKeys.map(k => doccount[k] || 0) }
+            ]
+        });
+
+        // 统一响应式处理
+        window.addEventListener('resize', function() {
+            distChart && distChart.resize();
+            lineChart && lineChart.resize();
+            barChart && barChart.resize();
+        });
+    };
+</script>
+
+<footer>
+    <div class="container">
+        <!-- <p style="font-weight: 700; color: var(--text);">ByteDance Seed & M-A-P Team</p> -->
+        <!-- <p style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--text-light);">Correspondence: Ge Zhang at zhangge.eli@bytedance.com</p> -->
+    </div>
+</footer>
+
+</body>
+</html>
